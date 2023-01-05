@@ -25,6 +25,8 @@ with `Flutter`:
 $ flutter pub get
 ```
 
+
+
 ### 3. Import it
 
 Now in your `Dart` code, you can use:
@@ -77,3 +79,5 @@ Future _payViaJazzCash(ProductModel element, BuildContext c) async {
     }
   }
 ```
+![Android](https://github.com/DigiX-Technologies/jazzcash_flutter/blob/main/images/jazzcash_android.gif)
+![IOS](https://github.com/DigiX-Technologies/jazzcash_flutter/blob/main/images/jazzcash_ios.gif)
