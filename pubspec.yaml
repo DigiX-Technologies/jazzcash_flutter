@@ -1,6 +1,6 @@
 name: jazzcash_flutter
 description: JazzCash Payment gateway integration in Flutter projects.
-version: 1.0.1
+version: 1.0.2
 homepage: https://github.com/DigiX-Technologies/jazzcash_flutter
 
 environment:
