@@ -6,7 +6,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  jazzcash_flutter: ^1.0.4
+  jazzcash_flutter: <Latest Version>
 ```
 
 ### 2. Install it
