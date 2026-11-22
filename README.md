@@ -58,7 +58,7 @@ Future _payViaJazzCash(ProductModel element, BuildContext c) async {
           ppAmount: '${element.price}',
           ppBillReference:'refbill${date.year}${date.month}${date.day}${date.hour}${date.millisecond}',
           ppDescription: 'Product details  ${element.name} - ${element.price}',
-          ppMerchantID: "Your Merchant Password",
+          ppMerchantID: "Your Merchant ID",
           ppPassword:  "Your Merchant Password",
           ppReturnURL:  "Your Return Url",);
 

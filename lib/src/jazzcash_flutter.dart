@@ -17,10 +17,15 @@ class JazzCashFlutter {
     required this.isSandbox,
   });
 
-  String sandBoxTransactionUrl = "https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/";
-  String liveTransactionUrl = "https://payments.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/";
+  String sandBoxTransactionUrl =
+      "https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/";
+  String liveTransactionUrl =
+      "https://payments.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/";
 
-  Future<String> startPayment({required JazzCashPaymentDataModelV1 paymentDataModelV1, required BuildContext context}) async {
+  Future<dynamic> startPayment({
+    required JazzCashPaymentDataModelV1 paymentDataModelV1,
+    required BuildContext context,
+  }) async {
     JazzCashPaymentRequest paymentRequest = JazzCashPaymentRequest(
       integritySalt: integritySalt,
       merchantID: merchantId,
@@ -28,7 +33,16 @@ class JazzCashFlutter {
       transactionUrl: isSandbox ? sandBoxTransactionUrl : liveTransactionUrl,
     );
 
-    String request = paymentRequest.generateRequest(jazzCashPaymentDataModel: paymentDataModelV1);
-    return await Navigator.of(context).push(CupertinoPageRoute(builder: (context) => PaymentScreen(request, paymentDataModelV1.ppReturnURL)));
+    String request = paymentRequest.generateRequest(
+      jazzCashPaymentDataModel: paymentDataModelV1,
+    );
+    return await Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (context) => PaymentScreen(
+          request,
+          paymentDataModelV1.ppReturnURL,
+        ),
+      ),
+    );
   }
 }

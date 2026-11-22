@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -8,45 +7,38 @@ class PaymentScreen extends StatefulWidget {
   final String request;
   final String returnUrl;
 
-  const PaymentScreen(this.request, this.returnUrl);
+  const PaymentScreen(this.request, this.returnUrl, {super.key});
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  final Completer<WebViewController> _controller =
-      Completer<WebViewController>();
+  late final WebViewController _controller;
 
   @override
   void initState() {
     super.initState();
-    if (Platform.isAndroid) {
-      WebView.platform = SurfaceAndroidWebView();
-    } else if (Platform.isIOS) {
-      WebView.platform = CupertinoWebView();
-    }
+    _initWebViewController();
   }
 
-  WebViewController ? _webViewController ;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: WebView(
-          initialUrl: htmlToURI(),
-          debuggingEnabled: false,
-          javascriptMode: JavascriptMode.unrestricted,
-          onWebViewCreated: (WebViewController webViewController) {
-            _controller.complete(webViewController);
-            _webViewController = webViewController;
-          },
+  void _initWebViewController() {
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..addJavaScriptChannel(
+        'Toaster',
+        onMessageReceived: (JavaScriptMessage message) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message.message)),
+          );
+        },
+      )
+      ..setNavigationDelegate(
+        NavigationDelegate(
           onProgress: (int progress) {
-             debugPrint('debugPrint WebView is loading (progress : $progress%)');
-          },
-          javascriptChannels: <JavascriptChannel>{
-            _toasterJavascriptChannel(context),
+            debugPrint('debugPrint WebView is loading (progress : $progress%)');
           },
           onPageStarted: (String url) {
             debugPrint('debugPrint Page started loading: $url');
@@ -54,59 +46,49 @@ class _PaymentScreenState extends State<PaymentScreen> {
           onPageFinished: (String url) {
             debugPrint('debugPrint Page finished loading: $url');
             if (url == widget.returnUrl) {
-              readJS(context);
+              _readJS();
             }
           },
-          gestureNavigationEnabled: true,
-          backgroundColor: const Color(0x00000000),
         ),
+      )
+      ..loadRequest(
+        Uri.dataFromString(
+          widget.request,
+          mimeType: 'text/html',
+          encoding: Encoding.getByName('utf-8'),
+        ),
+      );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: WebViewWidget(controller: _controller),
       ),
     );
   }
 
-  JavascriptChannel _toasterJavascriptChannel(BuildContext context) {
-    return JavascriptChannel(
-        name: 'Toaster',
-        onMessageReceived: (JavascriptMessage message) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message.message)),
-          );
-        });
-  }
-
-  String htmlToURI() {
-    return Uri.dataFromString(widget.request,
-            mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
-        .toString();
-  }
-
-  void readJS(BuildContext cont) async {
-    String html = await _webViewController!.runJavascriptReturningResult(
-        "window.document.getElementsByTagName('pre')[0].innerHTML;");
-
+  void _readJS() async {
     try {
-      // var jsondecoded = json.decode(html);
-      // PaymentResponseModel paymentResponseModel;
-      // if (Platform.isIOS) {
-      //   // ios
-      //   paymentResponseModel = PaymentResponseModel.fromJson(jsondecoded);
-      // } else if (Platform.isAndroid) {
-      //   // android
-      //   paymentResponseModel =
-      //       PaymentResponseModel.fromJson(json.decode(jsondecoded));
-      // }
-      // log('jsondecoded --> ${jsondecoded}');
-      await Future.delayed(Duration(seconds: 2));
-      // Navigator.pop(cont, paymentResponseModel);
-      Navigator.pop(cont, html);
-      // if(jsondecoded['pp_ResponseCode']=='000'){
-      //
-      // }
+      final Object result = await _controller.runJavaScriptReturningResult(
+        "window.document.getElementsByTagName('pre')[0].innerHTML;",
+      );
+      String html = result.toString();
+      try {
+        final decoded = jsonDecode(html);
+        if (decoded is String) {
+          html = decoded;
+        }
+      } catch (_) {}
 
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
+      Navigator.pop(context, html);
     } catch (err) {
       debugPrint('debugPrint exception $err');
-      Navigator.pop(cont, null);
+      if (!mounted) return;
+      Navigator.pop(context, null);
     }
-   // print("html response --> $html");
   }
 }

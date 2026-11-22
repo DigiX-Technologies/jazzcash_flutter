@@ -8,7 +8,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -29,19 +28,18 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   String paymentStatus = "pending";
   ProductModel productModel = ProductModel("Product 1", "100");
-  String integritySalt= "Your Integrity salt";
-  String merchantID= "Your Merchant Id";
+  String integritySalt = "Your Integrity salt";
+  String merchantID = "Your Merchant Id";
   String merchantPassword = "Your Merchant Password";
-  String transactionUrl= "Your Return Url";
+  String transactionUrl = "Your Return Url";
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("JazzCash Flutter Example"),
+        title: const Text("JazzCash Flutter Example"),
       ),
       body: Center(
         child: Column(
@@ -49,18 +47,19 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             Text("Product Name : ${productModel.productName}"),
             Text("Product Price : ${productModel.productPrice}"),
-            ElevatedButton(onPressed: () {
-              _payViaJazzCash(productModel, context);
-            }, child: const Text("Purchase Now !"))
+            ElevatedButton(
+              onPressed: () {
+                _payViaJazzCash(productModel, context);
+              },
+              child: const Text("Purchase Now !"),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Future _payViaJazzCash(ProductModel element, BuildContext c) async {
-    // print("clicked on Product ${element.name}");
-
+  Future<void> _payViaJazzCash(ProductModel element, BuildContext c) async {
     try {
       JazzCashFlutter jazzCashFlutter = JazzCashFlutter(
         merchantId: merchantID,
@@ -73,32 +72,27 @@ class _MyHomePageState extends State<MyHomePage> {
 
       JazzCashPaymentDataModelV1 paymentDataModelV1 = JazzCashPaymentDataModelV1(
         ppAmount: '${element.productPrice}',
-        ppBillReference:'refbill${date.year}${date.month}${date.day}${date.hour}${date.millisecond}',
-        ppDescription: 'Product details  ${element.productName} - ${element.productPrice}',
+        ppBillReference:
+            'refbill${date.year}${date.month}${date.day}${date.hour}${date.millisecond}',
+        ppDescription:
+            'Product details  ${element.productName} - ${element.productPrice}',
         ppMerchantID: merchantID,
-        ppPassword:  merchantPassword,
+        ppPassword: merchantPassword,
         ppReturnURL: transactionUrl,
       );
 
-      jazzCashFlutter.startPayment(paymentDataModelV1: paymentDataModelV1, context: context).then((_response) {
-        print("response from jazzcash $_response");
-
-        // _checkIfPaymentSuccessfull(_response, element, context).then((res) {
-        //   // res is the response you returned from your return url;
-        //   return res;
-        // });
-
+      final response = await jazzCashFlutter.startPayment(
+        paymentDataModelV1: paymentDataModelV1,
+        context: c,
+      );
+      debugPrint("response from jazzcash $response");
+      if (mounted) {
         setState(() {});
-      });
+      }
     } catch (err) {
-      print("Error in payment $err");
-      // CommonFunctions.CommonToast(
-      //   message: "Error in payment $err",
-      // );
-      return false;
+      debugPrint("Error in payment $err");
     }
   }
-
 }
 
 class ProductModel {
