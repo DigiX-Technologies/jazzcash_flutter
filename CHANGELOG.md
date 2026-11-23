@@ -1,3 +1,11 @@
+## 1.0.7
+
+* Validate payment amounts and escape dynamic values in the generated form.
+* Match gateway return URLs when query parameters or fragments are added.
+* Return a typed `String?` payment response and avoid an unnecessary callback delay.
+* Improve the package documentation and sandbox example.
+* Add pub.dev repository metadata and exclude large demo GIFs from the archive.
+
 ## 1.0.6
 
 * Upgraded Dart SDK constraints to `>=3.0.0 <4.0.0`.

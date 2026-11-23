@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -15,6 +16,7 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen> {
   late final WebViewController _controller;
+  bool _returnHandled = false;
 
   @override
   void initState() {
@@ -38,15 +40,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (int progress) {
-            debugPrint('debugPrint WebView is loading (progress : $progress%)');
-          },
-          onPageStarted: (String url) {
-            debugPrint('debugPrint Page started loading: $url');
+            debugPrint('JazzCash WebView loading ($progress%)');
           },
           onPageFinished: (String url) {
-            debugPrint('debugPrint Page finished loading: $url');
-            if (url == widget.returnUrl) {
-              _readJS();
+            if (!_returnHandled && _matchesReturnUrl(url)) {
+              _returnHandled = true;
+              unawaited(_readJS());
             }
           },
         ),
@@ -69,24 +68,39 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  void _readJS() async {
+  bool _matchesReturnUrl(String url) {
+    final currentUri = Uri.tryParse(url);
+    final returnUri = Uri.tryParse(widget.returnUrl);
+    if (currentUri == null || returnUri == null) return false;
+
+    return currentUri.scheme == returnUri.scheme &&
+        currentUri.host == returnUri.host &&
+        currentUri.port == returnUri.port &&
+        (currentUri.path.isEmpty ? '/' : currentUri.path) ==
+            (returnUri.path.isEmpty ? '/' : returnUri.path);
+  }
+
+  Future<void> _readJS() async {
     try {
       final Object result = await _controller.runJavaScriptReturningResult(
-        "window.document.getElementsByTagName('pre')[0].innerHTML;",
+        "document.querySelector('pre')"
+        " ? document.querySelector('pre').textContent"
+        " : document.body.innerText;",
       );
-      String html = result.toString();
+      String response = result.toString();
       try {
-        final decoded = jsonDecode(html);
+        final decoded = jsonDecode(response);
         if (decoded is String) {
-          html = decoded;
+          response = decoded;
         }
-      } catch (_) {}
+      } on FormatException {
+        // Plain-text responses are returned unchanged.
+      }
 
-      await Future.delayed(const Duration(seconds: 2));
       if (!mounted) return;
-      Navigator.pop(context, html);
-    } catch (err) {
-      debugPrint('debugPrint exception $err');
+      Navigator.pop(context, response);
+    } on Exception catch (error) {
+      debugPrint('Unable to read the JazzCash response: $error');
       if (!mounted) return;
       Navigator.pop(context, null);
     }

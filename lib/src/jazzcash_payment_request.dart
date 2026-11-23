@@ -1,20 +1,32 @@
+import 'dart:convert';
+
 import 'jazzcash_payment_data_model_v1.dart';
 
 class JazzCashPaymentRequest {
   String integritySalt;
   String merchantID;
   String merchantPassword;
-  String transactionUrl ;
+  String transactionUrl;
 
   JazzCashPaymentRequest(
       {required this.integritySalt,
       required this.merchantID,
       required this.merchantPassword,
-      required this.transactionUrl
-      });
+      required this.transactionUrl});
 
   String generateRequest(
       {required JazzCashPaymentDataModelV1 jazzCashPaymentDataModel}) {
+    final amount = double.tryParse(jazzCashPaymentDataModel.ppAmount);
+    if (amount == null || !amount.isFinite || amount <= 0) {
+      throw ArgumentError.value(
+        jazzCashPaymentDataModel.ppAmount,
+        'ppAmount',
+        'Must be a positive number.',
+      );
+    }
+
+    const attributeEscape = HtmlEscape(HtmlEscapeMode.attribute);
+
     String htmlcustom = '''<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -61,7 +73,7 @@ class JazzCashPaymentRequest {
       };
       function getDynamicValues() {
        
-        let amount = ${jazzCashPaymentDataModel.ppAmount};
+        let amount = $amount;
         document.getElementsByName("pp_Amount")[0].value = amount * 100;
 
         // let billRef = Math.floor(Math.random() * 1000);
@@ -91,13 +103,13 @@ class JazzCashPaymentRequest {
 
     <div class="container mt-5 bg-white">
       <h4>JazzCash HTTP POST Sample (Page Redirection v1.1)</h4>
-      <label id="integritySalt" style="display: none">$integritySalt</label>
+      <label id="integritySalt" style="display: none">${attributeEscape.convert(integritySalt)}</label>
 
       <!-- old bootstrap form -->
       <form
         name="jsform"
         method="post"
-        action="$transactionUrl">
+        action="${attributeEscape.convert(transactionUrl)}">
         <div class="row">
           <div class="col-md-6">
             <div class="form-group">
@@ -106,7 +118,7 @@ class JazzCashPaymentRequest {
                 class="form-control"
                 name="pp_Version"
                 placeholder="pp_Version"
-                value="${jazzCashPaymentDataModel.ppVersion}"
+                value="${attributeEscape.convert(jazzCashPaymentDataModel.ppVersion)}"
               />
             </div>
           </div>
@@ -155,7 +167,7 @@ class JazzCashPaymentRequest {
                 class="form-control"
                 name="pp_MerchantID"
                 placeholder="pp_MerchantID"
-                value="$merchantID"
+                value="${attributeEscape.convert(merchantID)}"
                 required
                 readonly
               />
@@ -182,7 +194,7 @@ class JazzCashPaymentRequest {
                 class="form-control"
                 name="pp_Password"
                 placeholder="pp_Password"
-                value="$merchantPassword"
+                value="${attributeEscape.convert(merchantPassword)}"
                 type="password"
                 required
                 readonly
@@ -282,7 +294,7 @@ class JazzCashPaymentRequest {
                 class="form-control"
                 name="pp_BillReference"
                 placeholder="pp_BillReference"
-                value="${jazzCashPaymentDataModel.ppBillReference}"
+                value="${attributeEscape.convert(jazzCashPaymentDataModel.ppBillReference)}"
               />
             </div>
           </div>
@@ -293,7 +305,7 @@ class JazzCashPaymentRequest {
                 class="form-control"
                 name="pp_Description"
                 placeholder="pp_Description"
-                value="${jazzCashPaymentDataModel.ppDescription}"
+                value="${attributeEscape.convert(jazzCashPaymentDataModel.ppDescription)}"
               />
             </div>
           </div>
@@ -319,7 +331,7 @@ class JazzCashPaymentRequest {
                 class="form-control"
                 name="pp_ReturnURL"
                 placeholder="pp_ReturnURL"
-                value="${jazzCashPaymentDataModel.ppReturnURL}"
+                value="${attributeEscape.convert(jazzCashPaymentDataModel.ppReturnURL)}"
                 required
               />
             </div>
@@ -345,7 +357,7 @@ class JazzCashPaymentRequest {
                 class="form-control"
                 name="ppmpf_1"
                 placeholder="ppmpf_1"
-                value="${jazzCashPaymentDataModel.ppmpf1}"
+                value="${attributeEscape.convert(jazzCashPaymentDataModel.ppmpf1)}"
               />
             </div>
           </div>
@@ -359,7 +371,7 @@ class JazzCashPaymentRequest {
                 class="form-control"
                 name="ppmpf_2"
                 placeholder="ppmpf_2"
-                value="${jazzCashPaymentDataModel.ppmpf2}"
+                value="${attributeEscape.convert(jazzCashPaymentDataModel.ppmpf2)}"
               />
             </div>
           </div>
@@ -370,7 +382,7 @@ class JazzCashPaymentRequest {
                 class="form-control"
                 name="ppmpf_3"
                 placeholder="ppmpf_3"
-                value="${jazzCashPaymentDataModel.ppmpf3}"
+                value="${attributeEscape.convert(jazzCashPaymentDataModel.ppmpf3)}"
               />
             </div>
           </div>
@@ -384,7 +396,7 @@ class JazzCashPaymentRequest {
                 class="form-control"
                 name="ppmpf_4"
                 placeholder="ppmpf_4"
-                value="${jazzCashPaymentDataModel.ppmpf4}"
+                value="${attributeEscape.convert(jazzCashPaymentDataModel.ppmpf4)}"
               />
             </div>
           </div>
@@ -395,7 +407,7 @@ class JazzCashPaymentRequest {
                 class="form-control"
                 name="ppmpf_5"
                 placeholder="ppmpf_5"
-                value="${jazzCashPaymentDataModel.ppmpf5}"
+                value="${attributeEscape.convert(jazzCashPaymentDataModel.ppmpf5)}"
               />
             </div>
           </div>

@@ -1,3 +1,4 @@
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:jazzcash_flutter/jazzcash_flutter.dart';
 
@@ -28,12 +29,16 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String paymentStatus = "pending";
-  ProductModel productModel = ProductModel("Product 1", "100");
-  String integritySalt = "Your Integrity salt";
-  String merchantID = "Your Merchant Id";
-  String merchantPassword = "Your Merchant Password";
-  String transactionUrl = "Your Return Url";
+  String paymentStatus = 'Ready for a sandbox payment';
+  bool _isProcessing = false;
+  final ProductModel productModel = const ProductModel(
+    productName: 'Product 1',
+    productPrice: '100.00',
+  );
+  final String integritySalt = 'YOUR_SANDBOX_INTEGRITY_SALT';
+  final String merchantID = 'YOUR_SANDBOX_MERCHANT_ID';
+  final String merchantPassword = 'YOUR_SANDBOX_MERCHANT_PASSWORD';
+  final String returnUrl = 'https://example.com/jazzcash/return';
 
   @override
   Widget build(BuildContext context) {
@@ -45,13 +50,16 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Product Name : ${productModel.productName}"),
-            Text("Product Price : ${productModel.productPrice}"),
+            Text('Product name: ${productModel.productName}'),
+            Text('Product price: PKR ${productModel.productPrice}'),
+            const SizedBox(height: 12),
+            Text(paymentStatus, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: () {
-                _payViaJazzCash(productModel, context);
-              },
-              child: const Text("Purchase Now !"),
+              onPressed: _isProcessing
+                  ? null
+                  : () => _payViaJazzCash(productModel, context),
+              child: Text(_isProcessing ? 'Opening JazzCash…' : 'Purchase now'),
             ),
           ],
         ),
@@ -60,44 +68,58 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _payViaJazzCash(ProductModel element, BuildContext c) async {
+    setState(() {
+      _isProcessing = true;
+      paymentStatus = 'Opening the JazzCash payment page...';
+    });
+
     try {
-      JazzCashFlutter jazzCashFlutter = JazzCashFlutter(
+      final jazzCashFlutter = JazzCashFlutter(
         merchantId: merchantID,
         merchantPassword: merchantPassword,
         integritySalt: integritySalt,
         isSandbox: true,
       );
 
-      DateTime date = DateTime.now();
+      final billReference = 'ORDER-${DateTime.now().millisecondsSinceEpoch}';
 
-      JazzCashPaymentDataModelV1 paymentDataModelV1 = JazzCashPaymentDataModelV1(
-        ppAmount: '${element.productPrice}',
-        ppBillReference:
-            'refbill${date.year}${date.month}${date.day}${date.hour}${date.millisecond}',
-        ppDescription:
-            'Product details  ${element.productName} - ${element.productPrice}',
+      final paymentDataModelV1 = JazzCashPaymentDataModelV1(
+        ppAmount: element.productPrice,
+        ppBillReference: billReference,
+        ppDescription: '${element.productName} - PKR ${element.productPrice}',
         ppMerchantID: merchantID,
         ppPassword: merchantPassword,
-        ppReturnURL: transactionUrl,
+        ppReturnURL: returnUrl,
       );
 
       final response = await jazzCashFlutter.startPayment(
         paymentDataModelV1: paymentDataModelV1,
         context: c,
       );
-      debugPrint("response from jazzcash $response");
-      if (mounted) {
-        setState(() {});
-      }
+      if (!mounted) return;
+      setState(() {
+        _isProcessing = false;
+        paymentStatus = response == null
+            ? 'No response was returned. Confirm the payment with your backend.'
+            : 'Gateway response received. Verify it with your backend.';
+      });
     } catch (err) {
-      debugPrint("Error in payment $err");
+      debugPrint('Unable to start JazzCash payment: $err');
+      if (!mounted) return;
+      setState(() {
+        _isProcessing = false;
+        paymentStatus = 'Could not start payment. Check the sandbox setup.';
+      });
     }
   }
 }
 
 class ProductModel {
-  String? productName;
-  String? productPrice;
+  const ProductModel({
+    required this.productName,
+    required this.productPrice,
+  });
 
-  ProductModel(this.productName, this.productPrice);
+  final String productName;
+  final String productPrice;
 }

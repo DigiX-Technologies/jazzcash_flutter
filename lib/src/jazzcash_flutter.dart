@@ -1,3 +1,4 @@
+// ignore: deprecated_member_use
 import 'package:flutter/cupertino.dart';
 
 import 'jazzcash_payment_data_model_v1.dart';
@@ -22,7 +23,7 @@ class JazzCashFlutter {
   String liveTransactionUrl =
       "https://payments.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/";
 
-  Future<dynamic> startPayment({
+  Future<String?> startPayment({
     required JazzCashPaymentDataModelV1 paymentDataModelV1,
     required BuildContext context,
   }) async {
@@ -36,7 +37,7 @@ class JazzCashFlutter {
     String request = paymentRequest.generateRequest(
       jazzCashPaymentDataModel: paymentDataModelV1,
     );
-    return await Navigator.of(context).push(
+    return Navigator.of(context).push<String>(
       CupertinoPageRoute(
         builder: (context) => PaymentScreen(
           request,

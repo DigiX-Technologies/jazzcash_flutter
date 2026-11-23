@@ -1,16 +1,14 @@
-# jazzcash_flutter_example
+# JazzCash Flutter example
 
-A new Flutter project.
+This app demonstrates the package's sandbox payment flow.
 
-## Getting Started
+1. Configure valid JazzCash sandbox credentials and a registered return URL in
+   `lib/main.dart`.
+2. From this directory, run `flutter pub get`.
+3. Launch the app on an Android or iOS device or simulator with WebView support.
+4. Tap **Purchase Now** to open the hosted payment page.
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The example deliberately does not treat the returned page text as proof of
+payment. Verify transaction status on your backend before fulfilling an order.
+Do not use the example's in-app credentials pattern for production secrets; see
+the security note in the package [README](../README.md).

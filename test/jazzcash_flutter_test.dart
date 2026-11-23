@@ -16,7 +16,8 @@ void main() {
       expect(jazzCash.merchantPassword, 'test_password');
       expect(jazzCash.integritySalt, 'test_salt');
       expect(jazzCash.isSandbox, true);
-      expect(jazzCash.sandBoxTransactionUrl, contains('sandbox.jazzcash.com.pk'));
+      expect(
+          jazzCash.sandBoxTransactionUrl, contains('sandbox.jazzcash.com.pk'));
       expect(jazzCash.liveTransactionUrl, contains('payments.jazzcash.com.pk'));
     });
 
@@ -67,7 +68,8 @@ void main() {
         ppReturnURL: 'https://example.com/callback',
       );
 
-      final html = paymentRequest.generateRequest(jazzCashPaymentDataModel: model);
+      final html =
+          paymentRequest.generateRequest(jazzCashPaymentDataModel: model);
 
       expect(html, contains('<!DOCTYPE html>'));
       expect(html, contains('test_salt_123'));
@@ -77,6 +79,61 @@ void main() {
       expect(html, contains('https://example.com/callback'));
       expect(html, contains('bill_001'));
       expect(html, contains('Test item'));
+    });
+
+    test('JazzCashPaymentRequest escapes HTML attribute values', () {
+      final paymentRequest = JazzCashPaymentRequest(
+        integritySalt: 'test_salt',
+        merchantID: 'test_mid',
+        merchantPassword: 'test_pwd',
+        transactionUrl: 'https://sandbox.jazzcash.com.pk/form',
+      );
+      final model = JazzCashPaymentDataModelV1(
+        ppAmount: '100',
+        ppBillReference: 'bill_001',
+        ppDescription: 'item" autofocus onfocus="alert(1)',
+        ppMerchantID: 'test_mid',
+        ppPassword: 'test_pwd',
+        ppReturnURL: 'https://example.com/callback',
+      );
+
+      final html = paymentRequest.generateRequest(
+        jazzCashPaymentDataModel: model,
+      );
+
+      expect(html,
+          contains('value="item&quot; autofocus onfocus=&quot;alert(1)"'));
+      expect(html, isNot(contains('value="item" autofocus')));
+    });
+
+    test('JazzCashPaymentRequest rejects non-positive or non-numeric amounts',
+        () {
+      final paymentRequest = JazzCashPaymentRequest(
+        integritySalt: 'test_salt',
+        merchantID: 'test_mid',
+        merchantPassword: 'test_pwd',
+        transactionUrl: 'https://sandbox.jazzcash.com.pk/form',
+      );
+
+      JazzCashPaymentDataModelV1 createModel(String amount) {
+        return JazzCashPaymentDataModelV1(
+          ppAmount: amount,
+          ppBillReference: 'bill_001',
+          ppDescription: 'Test item',
+          ppMerchantID: 'test_mid',
+          ppPassword: 'test_pwd',
+          ppReturnURL: 'https://example.com/callback',
+        );
+      }
+
+      for (final amount in ['0', '-1', '100; alert(1)']) {
+        expect(
+          () => paymentRequest.generateRequest(
+            jazzCashPaymentDataModel: createModel(amount),
+          ),
+          throwsArgumentError,
+        );
+      }
     });
   });
 }
